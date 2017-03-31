@@ -10,7 +10,7 @@ admin.initializeApp(functions.config().firebase);
 //  response.send("Hello from Firebase!");
 // })
 
-exports.addCreatedChatroomToOwner = functions.database.ref('/chatrooms/$chatroom_id')
+exports.addCreatedChatroomToOwner = functions.database.ref('/chatrooms/{chatroom_id}')
     .onWrite(
         event => {
             const userId = event.data.val().owner;
