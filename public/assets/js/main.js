@@ -5,6 +5,13 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _dialogPolyfill = require('dialog-polyfill');
+
+var _dialogPolyfill2 = _interopRequireDefault(_dialogPolyfill);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 exports.default = {
     data: function data() {
         return {
@@ -14,15 +21,32 @@ exports.default = {
         };
     },
 
-    created: function created() {
-        var vm = this;
+    mounted: function mounted() {
+        var _this = this;
+
+        var initDialog = this.$el.querySelector('#init-dialog');
+
+        if (!initDialog.showModal) {
+            _dialogPolyfill2.default.registerDialog(initDialog);
+        }
+
+        initDialog.showModal();
+
         firebase.auth().onAuthStateChanged(function (user) {
             if (user) {
-                vm.$data.user = user;
-                vm.$data.logued = true;
+                _this.user = user;
+                _this.logued = true;
+
+                initDialog.close();
+
+                firebase.database().ref('/users/' + user.uid).set({
+                    'displayName': user.displayName,
+                    'photoURL': user.photoURL
+                });
             } else {
-                vm.$data.user = null;
-                vm.$data.logued = false;
+                _this.user = null;
+                _this.logued = false;
+                initDialog.showModal();
             }
         });
     },
@@ -31,17 +55,17 @@ exports.default = {
         login: function login(event) {
             var provider = new firebase.auth.GoogleAuthProvider();
 
-            firebase.auth().signInWithPopup(provider).then(function (result) {
-                var token = result.credential.accessToken;
-                var user = result.user;
-            }).catch(function (error) {
+            firebase.auth().signInWithPopup(provider).then(function (result) {}).catch(function (error) {
                 var errorCode = error.code;
                 var errorMessage = error.message;
-                var email = error.email;
-                var credential = error.credential;
+                console.log(error);
 
                 alert('An error occured while login : ' + errorCode + ' - ' + errorMessage);
             });
+        },
+        logout: function logout() {
+            firebase.auth().signOut();
+            this.user = null;
         },
         createChatroom: function createChatroom(event) {
             var chatroomName = prompt('Create new chatroom, please enter the name (format : [a-zA-Z0-9-_]+, min lenght: 2)');
@@ -78,7 +102,7 @@ exports.default = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.logued === null)?_c('div',{staticClass:"loading"},[_vm._v("Loading...")]):(!_vm.logued)?_c('div',{staticClass:"login"},[_c('button',{on:{"click":_vm.login}},[_vm._v("Login")])]):_c('div',{staticClass:"app-panel"},[_c('button',{on:{"click":_vm.createChatroom}},[_vm._v("Create new chatroom")]),_vm._v(" "),_c('button',{on:{"click":_vm.joinChatroom}},[_vm._v("Join chatroom")]),_vm._v(" "),_c('div',{staticClass:"chatroom-list-container"},[_c('chatroom-list',{attrs:{"user":_vm.user},on:{"select":_vm.selectChatroom}})],1),_vm._v(" "),_c('div',{staticClass:"chatroom-container"},[_c('chatroom',{attrs:{"chatroom":_vm.currentChatroom,"user":_vm.user}})],1)])}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header"},[_c('header',{staticClass:"demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600"},[_c('div',{staticClass:"mdl-layout__header-row"},[_c('span',{staticClass:"mdl-layout-title"},[_vm._v(_vm._s(_vm.currentChatroom))]),_vm._v(" "),(_vm.logued)?[_c('div',{staticClass:"mdl-layout-spacer"}),_vm._v(" "),_c('button',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon",attrs:{"id":"hdrbtn"}},[_c('i',{staticClass:"material-icons"},[_vm._v("more_vert")])]),_vm._v(" "),_c('ul',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"mdl-menu mdl-js-menu mdl-js-ripple-effect mdl-menu--bottom-right",attrs:{"for":"hdrbtn"}},[_c('li',{staticClass:"mdl-menu__item",on:{"click":_vm.createChatroom}},[_vm._v("Create new chatroom")]),_vm._v(" "),_c('li',{staticClass:"mdl-menu__item",on:{"click":_vm.joinChatroom}},[_vm._v("Join chatroom")])])]:_vm._e()],2)]),_vm._v(" "),_c('chatroom-list',{attrs:{"user":_vm.user},on:{"select":_vm.selectChatroom,"logout":_vm.logout}}),_vm._v(" "),_c('chatroom',{attrs:{"chatroom":_vm.currentChatroom,"user":_vm.user}}),_vm._v(" "),_c('dialog',{staticClass:"mdl-dialog",attrs:{"id":"init-dialog"}},[_c('div',{staticClass:"mdl-dialog__content"},[(_vm.logued === null)?_c('div',{staticClass:"loading"},[_vm._v("Loading...")]):(!_vm.logued)?_c('div',{staticClass:"login"},[_c('h3',[_vm._v("Please connect to the chat")])]):_vm._e()]),_vm._v(" "),(_vm.logued === false)?_c('div',{staticClass:"mdl-dialog__actions mdl-dialog__actions--full-width"},[_c('button',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect",on:{"click":_vm.login}},[_vm._v("Login")])]):_vm._e()])],1)}
 __vue__options__.staticRenderFns = []
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
@@ -90,7 +114,7 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
     hotAPI.reload("data-v-7cc87654", __vue__options__)
   }
 })()}
-},{"vue":7,"vue-hot-reload-api":6}],2:[function(require,module,exports){
+},{"dialog-polyfill":6,"vue":9,"vue-hot-reload-api":8}],2:[function(require,module,exports){
 'use strict';
 
 var _vue = require('vue');
@@ -119,36 +143,77 @@ _vue2.default.component('app', _App2.default);
 _vue2.default.component('chatroom', _Chatroom2.default);
 _vue2.default.component('chatroom-list', _ChatroomList2.default);
 
+// Automatically bind MDL component
+// Quick hack to handle MDL components requiring
+// javascript to work
+_vue2.default.directive('mdl', {
+    inserted: function inserted(el) {
+        componentHandler.upgradeElement(el);
+    }
+});
+
 var app = new _vue2.default({
     el: '#app'
 });
 
-/*import Person from './namespace/Person';
+},{"./App.vue":1,"./chatroom/Chatroom.vue":4,"./chatroom/ChatroomList.vue":5,"vue":9}],3:[function(require,module,exports){
+'use strict';
 
-class Main {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
 
-    test() {
-        var person = new Person('toto');
-        console.log('Test method executed');
-        console.log(person.getName());
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var UserInfosService = function () {
+    function UserInfosService() {
+        _classCallCheck(this, UserInfosService);
+
+        this.users = {};
     }
 
-}
+    _createClass(UserInfosService, [{
+        key: 'getUser',
+        value: function getUser(userId) {
+            var _this = this;
 
+            return new Promise(function (resolve, reject) {
 
-var main = new Main();
+                if (userId in _this.users) {
+                    resolve(_this.users[userId]);
+                } else {
+                    firebase.database().ref('/users/' + userId).once('value', function (snapshot) {
+                        _this.users[userId] = snapshot.val();
+                        resolve(snapshot.val());
+                    }).then(function (success) {}, reject);
+                }
+            });
+        }
+    }]);
 
-main.test();
+    return UserInfosService;
+}();
 
-alert('tata');*/
+exports.default = UserInfosService;
 
-},{"./App.vue":1,"./chatroom/Chatroom.vue":3,"./chatroom/ChatroomList.vue":4,"vue":7}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 ;(function(){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _UserInfosService = require('../UserInfosService');
+
+var _UserInfosService2 = _interopRequireDefault(_UserInfosService);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var uis = new _UserInfosService2.default();
+
 exports.default = {
     props: ['user', 'chatroom'],
     data: function data() {
@@ -173,16 +238,27 @@ exports.default = {
             this.lines = [];
             if (this.chatroom !== null) {
                 firebase.database().ref('/chatrooms-messages/' + this.chatroom).on('child_added', function (snapshot) {
-                    _this.lines.push({
+                    var line = {
                         'timestamp': snapshot.val().timestamp,
-                        'author': snapshot.val().user,
-                        'message': snapshot.val().message
+                        'author': null,
+                        'message': snapshot.val().message,
+                        'own': snapshot.val().user == _this.user.uid
+                    };
+
+                    uis.getUser(snapshot.val().user).then(function (value) {
+                        line.author = value;
                     });
+
+                    _this.lines.push(line);
                 });
             }
         },
-        sendMessage: function sendMessage() {
+        sendMessage: function sendMessage(e) {
             var _this2 = this;
+
+            if (e.keyCode !== 13) {
+                return;
+            }
 
             var data = {
                 'timestamp': firebase.database.ServerValue.TIMESTAMP,
@@ -207,7 +283,7 @@ exports.default = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.chatroom)?_c('div',{staticClass:"chatroom"},[_c('h2',[_vm._v(_vm._s(_vm.chatroom))]),_vm._v(" "),_c('ul',[_c('h2',[_vm._v("Chatroom")]),_vm._v(" "),_vm._l((_vm.lines),function(line){return _c('li',[_vm._v(_vm._s(line.user)+" - "+_vm._s(line.message))])})],2),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.message),expression:"message"}],attrs:{"type":"text"},domProps:{"value":(_vm.message)},on:{"input":function($event){if($event.target.composing){ return; }_vm.message=$event.target.value}}}),_vm._v(" "),_c('button',{on:{"click":function($event){_vm.sendMessage()}}},[_vm._v("Submit")])]):_c('div',{staticClass:"chatroom"},[_c('h2',[_vm._v("No chatroom selected")])])}
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('main',{staticClass:"message-list mdl-layout__content mdl-color--grey-100"},[(_vm.user)?[(_vm.chatroom)?[_c('div',{staticClass:"message-list__messages-container"},_vm._l((_vm.lines),function(line){return _c('div',{class:{'message-list__message': true, 'mdl-shadow--2dp': true, 'mdl-color-text--grey-600': true, 'mdl-color--blue-200': line.own, 'own': line.own}},[_vm._v("\n\n                        "+_vm._s(line.message)+"\n                    "),(line.author !== null)?_c('div',{staticClass:"author"},[_c('img',{staticClass:"author__image",attrs:{"src":line.author.photoURL}}),_vm._v(" "+_vm._s(line.author.displayName)+"\n                    ")]):_vm._e()])})),_vm._v(" "),_c('div',{staticClass:"message-list__input"},[_c('div',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"mdl-textfield mdl-js-textfield"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.message),expression:"message"}],staticClass:"mdl-textfield__input",attrs:{"type":"text","id":"message"},domProps:{"value":(_vm.message)},on:{"keyup":_vm.sendMessage,"input":function($event){if($event.target.composing){ return; }_vm.message=$event.target.value}}}),_vm._v(" "),_c('label',{staticClass:"mdl-textfield__label",attrs:{"for":"message"}},[_vm._v("Type your message and send it using 'enter'...")])])])]:_c('div',{staticClass:"chatroom"},[_c('h2',[_vm._v("No chatroom selected")])])]:_vm._e()],2)}
 __vue__options__.staticRenderFns = []
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
@@ -219,7 +295,7 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
     hotAPI.reload("data-v-4dc6dd6f", __vue__options__)
   }
 })()}
-},{"vue":7,"vue-hot-reload-api":6}],4:[function(require,module,exports){
+},{"../UserInfosService":3,"vue":9,"vue-hot-reload-api":8}],5:[function(require,module,exports){
 ;(function(){
 'use strict';
 
@@ -243,6 +319,9 @@ exports.default = {
     },
     methods: {
         loadChatroomList: function loadChatroomList() {
+            if (!this.user) {
+                return;
+            }
             var me = this;
             firebase.database().ref('/chatroom-list/' + this.user.uid).on('value', function (snapshot) {
                 me.chatrooms = [];
@@ -260,6 +339,9 @@ exports.default = {
         },
         selectChatroom: function selectChatroom(chatroom) {
             this.$emit('select', chatroom.id);
+        },
+        logout: function logout() {
+            this.$emit('logout');
         }
     }
 };
@@ -267,8 +349,8 @@ exports.default = {
 if (module.exports.__esModule) module.exports = module.exports.default
 var __vue__options__ = (typeof module.exports === "function"? module.exports.options: module.exports)
 if (__vue__options__.functional) {console.error("[vueify] functional components are not supported and should be defined in plain js files using render functions.")}
-__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"chatroom-list"},[_c('h2',[_vm._v("Chatroom List")]),_vm._v(" "),_c('ul',_vm._l((_vm.chatrooms),function(chatroom){return _c('li',{on:{"click":function($event){_vm.selectChatroom(chatroom)}}},[_vm._v(_vm._s(chatroom.id))])}))])}
-__vue__options__.staticRenderFns = []
+__vue__options__.render = function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50"},[(_vm.user)?[_c('header',{staticClass:"demo-drawer-header"},[_c('img',{staticClass:"demo-avatar",attrs:{"src":_vm.user.photoURL}}),_vm._v(" "),_c('div',{staticClass:"demo-avatar-dropdown"},[_c('span',[_vm._v(_vm._s(_vm.user.displayName))]),_vm._v(" "),_c('div',{staticClass:"mdl-layout-spacer"}),_vm._v(" "),_c('button',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon",attrs:{"id":"accbtn"}},[_c('i',{staticClass:"material-icons",attrs:{"role":"presentation"}},[_vm._v("arrow_drop_down")]),_vm._v(" "),_c('span',{staticClass:"visuallyhidden"},[_vm._v("Accounts")])]),_vm._v(" "),_c('ul',{directives:[{name:"mdl",rawName:"v-mdl"}],staticClass:"mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect",attrs:{"for":"accbtn"}},[_c('li',{staticClass:"mdl-menu__item",on:{"click":_vm.logout}},[_vm._v("Logout")])])])]),_vm._v(" "),_c('nav',{staticClass:"demo-navigation mdl-navigation mdl-color--blue-grey-800"},[_vm._l((_vm.chatrooms),function(chatroom){return _c('a',{staticClass:"mdl-navigation__link",on:{"click":function($event){_vm.selectChatroom(chatroom)}}},[_vm._v(_vm._s(chatroom.id))])}),_vm._v(" "),_c('div',{staticClass:"mdl-layout-spacer"}),_vm._v(" "),_vm._m(0)],2)]:_vm._e()],2)}
+__vue__options__.staticRenderFns = [function render () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('a',{staticClass:"mdl-navigation__link",attrs:{"href":""}},[_c('i',{staticClass:"mdl-color-text--blue-grey-400 material-icons",attrs:{"role":"presentation"}},[_vm._v("help_outline")]),_c('span',{staticClass:"visuallyhidden"},[_vm._v("Help")])])}]
 if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
@@ -279,7 +361,662 @@ if (module.hot) {(function () {  var hotAPI = require("vue-hot-reload-api")
     hotAPI.reload("data-v-b541a0a6", __vue__options__)
   }
 })()}
-},{"vue":7,"vue-hot-reload-api":6}],5:[function(require,module,exports){
+},{"vue":9,"vue-hot-reload-api":8}],6:[function(require,module,exports){
+(function() {
+
+  // nb. This is for IE10 and lower _only_.
+  var supportCustomEvent = window.CustomEvent;
+  if (!supportCustomEvent || typeof supportCustomEvent == 'object') {
+    supportCustomEvent = function CustomEvent(event, x) {
+      x = x || {};
+      var ev = document.createEvent('CustomEvent');
+      ev.initCustomEvent(event, !!x.bubbles, !!x.cancelable, x.detail || null);
+      return ev;
+    };
+    supportCustomEvent.prototype = window.Event.prototype;
+  }
+
+  /**
+   * @param {Element} el to check for stacking context
+   * @return {boolean} whether this el or its parents creates a stacking context
+   */
+  function createsStackingContext(el) {
+    while (el && el !== document.body) {
+      var s = window.getComputedStyle(el);
+      var invalid = function(k, ok) {
+        return !(s[k] === undefined || s[k] === ok);
+      }
+      if (s.opacity < 1 ||
+          invalid('zIndex', 'auto') ||
+          invalid('transform', 'none') ||
+          invalid('mixBlendMode', 'normal') ||
+          invalid('filter', 'none') ||
+          invalid('perspective', 'none') ||
+          s['isolation'] === 'isolate' ||
+          s.position === 'fixed' ||
+          s.webkitOverflowScrolling === 'touch') {
+        return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  /**
+   * Finds the nearest <dialog> from the passed element.
+   *
+   * @param {Element} el to search from
+   * @return {HTMLDialogElement} dialog found
+   */
+  function findNearestDialog(el) {
+    while (el) {
+      if (el.localName === 'dialog') {
+        return /** @type {HTMLDialogElement} */ (el);
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  /**
+   * Blur the specified element, as long as it's not the HTML body element.
+   * This works around an IE9/10 bug - blurring the body causes Windows to
+   * blur the whole application.
+   *
+   * @param {Element} el to blur
+   */
+  function safeBlur(el) {
+    if (el && el.blur && el != document.body) {
+      el.blur();
+    }
+  }
+
+  /**
+   * @param {!NodeList} nodeList to search
+   * @param {Node} node to find
+   * @return {boolean} whether node is inside nodeList
+   */
+  function inNodeList(nodeList, node) {
+    for (var i = 0; i < nodeList.length; ++i) {
+      if (nodeList[i] == node) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @param {!HTMLDialogElement} dialog to upgrade
+   * @constructor
+   */
+  function dialogPolyfillInfo(dialog) {
+    this.dialog_ = dialog;
+    this.replacedStyleTop_ = false;
+    this.openAsModal_ = false;
+
+    // Set a11y role. Browsers that support dialog implicitly know this already.
+    if (!dialog.hasAttribute('role')) {
+      dialog.setAttribute('role', 'dialog');
+    }
+
+    dialog.show = this.show.bind(this);
+    dialog.showModal = this.showModal.bind(this);
+    dialog.close = this.close.bind(this);
+
+    if (!('returnValue' in dialog)) {
+      dialog.returnValue = '';
+    }
+
+    if ('MutationObserver' in window) {
+      var mo = new MutationObserver(this.maybeHideModal.bind(this));
+      mo.observe(dialog, {attributes: true, attributeFilter: ['open']});
+    } else {
+      // IE10 and below support. Note that DOMNodeRemoved etc fire _before_ removal. They also
+      // seem to fire even if the element was removed as part of a parent removal. Use the removed
+      // events to force downgrade (useful if removed/immediately added).
+      var removed = false;
+      var cb = function() {
+        removed ? this.downgradeModal() : this.maybeHideModal();
+        removed = false;
+      }.bind(this);
+      var timeout;
+      var delayModel = function(ev) {
+        var cand = 'DOMNodeRemoved';
+        removed |= (ev.type.substr(0, cand.length) === cand);
+        window.clearTimeout(timeout);
+        timeout = window.setTimeout(cb, 0);
+      };
+      ['DOMAttrModified', 'DOMNodeRemoved', 'DOMNodeRemovedFromDocument'].forEach(function(name) {
+        dialog.addEventListener(name, delayModel);
+      });
+    }
+    // Note that the DOM is observed inside DialogManager while any dialog
+    // is being displayed as a modal, to catch modal removal from the DOM.
+
+    Object.defineProperty(dialog, 'open', {
+      set: this.setOpen.bind(this),
+      get: dialog.hasAttribute.bind(dialog, 'open')
+    });
+
+    this.backdrop_ = document.createElement('div');
+    this.backdrop_.className = 'backdrop';
+    this.backdrop_.addEventListener('click', this.backdropClick_.bind(this));
+  }
+
+  dialogPolyfillInfo.prototype = {
+
+    get dialog() {
+      return this.dialog_;
+    },
+
+    /**
+     * Maybe remove this dialog from the modal top layer. This is called when
+     * a modal dialog may no longer be tenable, e.g., when the dialog is no
+     * longer open or is no longer part of the DOM.
+     */
+    maybeHideModal: function() {
+      if (this.dialog_.hasAttribute('open') && document.body.contains(this.dialog_)) { return; }
+      this.downgradeModal();
+    },
+
+    /**
+     * Remove this dialog from the modal top layer, leaving it as a non-modal.
+     */
+    downgradeModal: function() {
+      if (!this.openAsModal_) { return; }
+      this.openAsModal_ = false;
+      this.dialog_.style.zIndex = '';
+
+      // This won't match the native <dialog> exactly because if the user set top on a centered
+      // polyfill dialog, that top gets thrown away when the dialog is closed. Not sure it's
+      // possible to polyfill this perfectly.
+      if (this.replacedStyleTop_) {
+        this.dialog_.style.top = '';
+        this.replacedStyleTop_ = false;
+      }
+
+      // Clear the backdrop and remove from the manager.
+      this.backdrop_.parentNode && this.backdrop_.parentNode.removeChild(this.backdrop_);
+      dialogPolyfill.dm.removeDialog(this);
+    },
+
+    /**
+     * @param {boolean} value whether to open or close this dialog
+     */
+    setOpen: function(value) {
+      if (value) {
+        this.dialog_.hasAttribute('open') || this.dialog_.setAttribute('open', '');
+      } else {
+        this.dialog_.removeAttribute('open');
+        this.maybeHideModal();  // nb. redundant with MutationObserver
+      }
+    },
+
+    /**
+     * Handles clicks on the fake .backdrop element, redirecting them as if
+     * they were on the dialog itself.
+     *
+     * @param {!Event} e to redirect
+     */
+    backdropClick_: function(e) {
+      if (!this.dialog_.hasAttribute('tabindex')) {
+        // Clicking on the backdrop should move the implicit cursor, even if dialog cannot be
+        // focused. Create a fake thing to focus on. If the backdrop was _before_ the dialog, this
+        // would not be needed - clicks would move the implicit cursor there.
+        var fake = document.createElement('div');
+        this.dialog_.insertBefore(fake, this.dialog_.firstChild);
+        fake.tabIndex = -1;
+        fake.focus();
+        this.dialog_.removeChild(fake);
+      } else {
+        this.dialog_.focus();
+      }
+
+      var redirectedEvent = document.createEvent('MouseEvents');
+      redirectedEvent.initMouseEvent(e.type, e.bubbles, e.cancelable, window,
+          e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey,
+          e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget);
+      this.dialog_.dispatchEvent(redirectedEvent);
+      e.stopPropagation();
+    },
+
+    /**
+     * Focuses on the first focusable element within the dialog. This will always blur the current
+     * focus, even if nothing within the dialog is found.
+     */
+    focus_: function() {
+      // Find element with `autofocus` attribute, or fall back to the first form/tabindex control.
+      var target = this.dialog_.querySelector('[autofocus]:not([disabled])');
+      if (!target && this.dialog_.tabIndex >= 0) {
+        target = this.dialog_;
+      }
+      if (!target) {
+        // Note that this is 'any focusable area'. This list is probably not exhaustive, but the
+        // alternative involves stepping through and trying to focus everything.
+        var opts = ['button', 'input', 'keygen', 'select', 'textarea'];
+        var query = opts.map(function(el) {
+          return el + ':not([disabled])';
+        });
+        // TODO(samthor): tabindex values that are not numeric are not focusable.
+        query.push('[tabindex]:not([disabled]):not([tabindex=""])');  // tabindex != "", not disabled
+        target = this.dialog_.querySelector(query.join(', '));
+      }
+      safeBlur(document.activeElement);
+      target && target.focus();
+    },
+
+    /**
+     * Sets the zIndex for the backdrop and dialog.
+     *
+     * @param {number} dialogZ
+     * @param {number} backdropZ
+     */
+    updateZIndex: function(dialogZ, backdropZ) {
+      if (dialogZ < backdropZ) {
+        throw new Error('dialogZ should never be < backdropZ');
+      }
+      this.dialog_.style.zIndex = dialogZ;
+      this.backdrop_.style.zIndex = backdropZ;
+    },
+
+    /**
+     * Shows the dialog. If the dialog is already open, this does nothing.
+     */
+    show: function() {
+      if (!this.dialog_.open) {
+        this.setOpen(true);
+        this.focus_();
+      }
+    },
+
+    /**
+     * Show this dialog modally.
+     */
+    showModal: function() {
+      if (this.dialog_.hasAttribute('open')) {
+        throw new Error('Failed to execute \'showModal\' on dialog: The element is already open, and therefore cannot be opened modally.');
+      }
+      if (!document.body.contains(this.dialog_)) {
+        throw new Error('Failed to execute \'showModal\' on dialog: The element is not in a Document.');
+      }
+      if (!dialogPolyfill.dm.pushDialog(this)) {
+        throw new Error('Failed to execute \'showModal\' on dialog: There are too many open modal dialogs.');
+      }
+
+      if (createsStackingContext(this.dialog_.parentElement)) {
+        console.warn('A dialog is being shown inside a stacking context. ' +
+            'This may cause it to be unusable. For more information, see this link: ' +
+            'https://github.com/GoogleChrome/dialog-polyfill/#stacking-context');
+      }
+
+      this.setOpen(true);
+      this.openAsModal_ = true;
+
+      // Optionally center vertically, relative to the current viewport.
+      if (dialogPolyfill.needsCentering(this.dialog_)) {
+        dialogPolyfill.reposition(this.dialog_);
+        this.replacedStyleTop_ = true;
+      } else {
+        this.replacedStyleTop_ = false;
+      }
+
+      // Insert backdrop.
+      this.dialog_.parentNode.insertBefore(this.backdrop_, this.dialog_.nextSibling);
+
+      // Focus on whatever inside the dialog.
+      this.focus_();
+    },
+
+    /**
+     * Closes this HTMLDialogElement. This is optional vs clearing the open
+     * attribute, however this fires a 'close' event.
+     *
+     * @param {string=} opt_returnValue to use as the returnValue
+     */
+    close: function(opt_returnValue) {
+      if (!this.dialog_.hasAttribute('open')) {
+        throw new Error('Failed to execute \'close\' on dialog: The element does not have an \'open\' attribute, and therefore cannot be closed.');
+      }
+      this.setOpen(false);
+
+      // Leave returnValue untouched in case it was set directly on the element
+      if (opt_returnValue !== undefined) {
+        this.dialog_.returnValue = opt_returnValue;
+      }
+
+      // Triggering "close" event for any attached listeners on the <dialog>.
+      var closeEvent = new supportCustomEvent('close', {
+        bubbles: false,
+        cancelable: false
+      });
+      this.dialog_.dispatchEvent(closeEvent);
+    }
+
+  };
+
+  var dialogPolyfill = {};
+
+  dialogPolyfill.reposition = function(element) {
+    var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+    var topValue = scrollTop + (window.innerHeight - element.offsetHeight) / 2;
+    element.style.top = Math.max(scrollTop, topValue) + 'px';
+  };
+
+  dialogPolyfill.isInlinePositionSetByStylesheet = function(element) {
+    for (var i = 0; i < document.styleSheets.length; ++i) {
+      var styleSheet = document.styleSheets[i];
+      var cssRules = null;
+      // Some browsers throw on cssRules.
+      try {
+        cssRules = styleSheet.cssRules;
+      } catch (e) {}
+      if (!cssRules) { continue; }
+      for (var j = 0; j < cssRules.length; ++j) {
+        var rule = cssRules[j];
+        var selectedNodes = null;
+        // Ignore errors on invalid selector texts.
+        try {
+          selectedNodes = document.querySelectorAll(rule.selectorText);
+        } catch(e) {}
+        if (!selectedNodes || !inNodeList(selectedNodes, element)) {
+          continue;
+        }
+        var cssTop = rule.style.getPropertyValue('top');
+        var cssBottom = rule.style.getPropertyValue('bottom');
+        if ((cssTop && cssTop != 'auto') || (cssBottom && cssBottom != 'auto')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  dialogPolyfill.needsCentering = function(dialog) {
+    var computedStyle = window.getComputedStyle(dialog);
+    if (computedStyle.position != 'absolute') {
+      return false;
+    }
+
+    // We must determine whether the top/bottom specified value is non-auto.  In
+    // WebKit/Blink, checking computedStyle.top == 'auto' is sufficient, but
+    // Firefox returns the used value. So we do this crazy thing instead: check
+    // the inline style and then go through CSS rules.
+    if ((dialog.style.top != 'auto' && dialog.style.top != '') ||
+        (dialog.style.bottom != 'auto' && dialog.style.bottom != ''))
+      return false;
+    return !dialogPolyfill.isInlinePositionSetByStylesheet(dialog);
+  };
+
+  /**
+   * @param {!Element} element to force upgrade
+   */
+  dialogPolyfill.forceRegisterDialog = function(element) {
+    if (element.showModal) {
+      console.warn('This browser already supports <dialog>, the polyfill ' +
+          'may not work correctly', element);
+    }
+    if (element.localName !== 'dialog') {
+      throw new Error('Failed to register dialog: The element is not a dialog.');
+    }
+    new dialogPolyfillInfo(/** @type {!HTMLDialogElement} */ (element));
+  };
+
+  /**
+   * @param {!Element} element to upgrade, if necessary
+   */
+  dialogPolyfill.registerDialog = function(element) {
+    if (!element.showModal) {
+      dialogPolyfill.forceRegisterDialog(element);
+    }
+  };
+
+  /**
+   * @constructor
+   */
+  dialogPolyfill.DialogManager = function() {
+    /** @type {!Array<!dialogPolyfillInfo>} */
+    this.pendingDialogStack = [];
+
+    var checkDOM = this.checkDOM_.bind(this);
+
+    // The overlay is used to simulate how a modal dialog blocks the document.
+    // The blocking dialog is positioned on top of the overlay, and the rest of
+    // the dialogs on the pending dialog stack are positioned below it. In the
+    // actual implementation, the modal dialog stacking is controlled by the
+    // top layer, where z-index has no effect.
+    this.overlay = document.createElement('div');
+    this.overlay.className = '_dialog_overlay';
+    this.overlay.addEventListener('click', function(e) {
+      this.forwardTab_ = undefined;
+      e.stopPropagation();
+      checkDOM([]);  // sanity-check DOM
+    }.bind(this));
+
+    this.handleKey_ = this.handleKey_.bind(this);
+    this.handleFocus_ = this.handleFocus_.bind(this);
+
+    this.zIndexLow_ = 100000;
+    this.zIndexHigh_ = 100000 + 150;
+
+    this.forwardTab_ = undefined;
+
+    if ('MutationObserver' in window) {
+      this.mo_ = new MutationObserver(function(records) {
+        var removed = [];
+        records.forEach(function(rec) {
+          for (var i = 0, c; c = rec.removedNodes[i]; ++i) {
+            if (!(c instanceof Element)) {
+              continue;
+            } else if (c.localName === 'dialog') {
+              removed.push(c);
+            } else {
+              var q = c.querySelector('dialog');
+              q && removed.push(q);
+            }
+          }
+        });
+        removed.length && checkDOM(removed);
+      });
+    }
+  };
+
+  /**
+   * Called on the first modal dialog being shown. Adds the overlay and related
+   * handlers.
+   */
+  dialogPolyfill.DialogManager.prototype.blockDocument = function() {
+    document.documentElement.addEventListener('focus', this.handleFocus_, true);
+    document.addEventListener('keydown', this.handleKey_);
+    this.mo_ && this.mo_.observe(document, {childList: true, subtree: true});
+  };
+
+  /**
+   * Called on the first modal dialog being removed, i.e., when no more modal
+   * dialogs are visible.
+   */
+  dialogPolyfill.DialogManager.prototype.unblockDocument = function() {
+    document.documentElement.removeEventListener('focus', this.handleFocus_, true);
+    document.removeEventListener('keydown', this.handleKey_);
+    this.mo_ && this.mo_.disconnect();
+  };
+
+  /**
+   * Updates the stacking of all known dialogs.
+   */
+  dialogPolyfill.DialogManager.prototype.updateStacking = function() {
+    var zIndex = this.zIndexHigh_;
+
+    for (var i = 0, dpi; dpi = this.pendingDialogStack[i]; ++i) {
+      dpi.updateZIndex(--zIndex, --zIndex);
+      if (i === 0) {
+        this.overlay.style.zIndex = --zIndex;
+      }
+    }
+
+    // Make the overlay a sibling of the dialog itself.
+    var last = this.pendingDialogStack[0];
+    if (last) {
+      var p = last.dialog.parentNode || document.body;
+      p.appendChild(this.overlay);
+    } else if (this.overlay.parentNode) {
+      this.overlay.parentNode.removeChild(this.overlay);
+    }
+  };
+
+  /**
+   * @param {Element} candidate to check if contained or is the top-most modal dialog
+   * @return {boolean} whether candidate is contained in top dialog
+   */
+  dialogPolyfill.DialogManager.prototype.containedByTopDialog_ = function(candidate) {
+    while (candidate = findNearestDialog(candidate)) {
+      for (var i = 0, dpi; dpi = this.pendingDialogStack[i]; ++i) {
+        if (dpi.dialog === candidate) {
+          return i === 0;  // only valid if top-most
+        }
+      }
+      candidate = candidate.parentElement;
+    }
+    return false;
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleFocus_ = function(event) {
+    if (this.containedByTopDialog_(event.target)) { return; }
+
+    event.preventDefault();
+    event.stopPropagation();
+    safeBlur(/** @type {Element} */ (event.target));
+
+    if (this.forwardTab_ === undefined) { return; }  // move focus only from a tab key
+
+    var dpi = this.pendingDialogStack[0];
+    var dialog = dpi.dialog;
+    var position = dialog.compareDocumentPosition(event.target);
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+      if (this.forwardTab_) {  // forward
+        dpi.focus_();
+      } else {  // backwards
+        document.documentElement.focus();
+      }
+    } else {
+      // TODO: Focus after the dialog, is ignored.
+    }
+
+    return false;
+  };
+
+  dialogPolyfill.DialogManager.prototype.handleKey_ = function(event) {
+    this.forwardTab_ = undefined;
+    if (event.keyCode === 27) {
+      event.preventDefault();
+      event.stopPropagation();
+      var cancelEvent = new supportCustomEvent('cancel', {
+        bubbles: false,
+        cancelable: true
+      });
+      var dpi = this.pendingDialogStack[0];
+      if (dpi && dpi.dialog.dispatchEvent(cancelEvent)) {
+        dpi.dialog.close();
+      }
+    } else if (event.keyCode === 9) {
+      this.forwardTab_ = !event.shiftKey;
+    }
+  };
+
+  /**
+   * Finds and downgrades any known modal dialogs that are no longer displayed. Dialogs that are
+   * removed and immediately readded don't stay modal, they become normal.
+   *
+   * @param {!Array<!HTMLDialogElement>} removed that have definitely been removed
+   */
+  dialogPolyfill.DialogManager.prototype.checkDOM_ = function(removed) {
+    // This operates on a clone because it may cause it to change. Each change also calls
+    // updateStacking, which only actually needs to happen once. But who removes many modal dialogs
+    // at a time?!
+    var clone = this.pendingDialogStack.slice();
+    clone.forEach(function(dpi) {
+      if (removed.indexOf(dpi.dialog) !== -1) {
+        dpi.downgradeModal();
+      } else {
+        dpi.maybeHideModal();
+      }
+    });
+  };
+
+  /**
+   * @param {!dialogPolyfillInfo} dpi
+   * @return {boolean} whether the dialog was allowed
+   */
+  dialogPolyfill.DialogManager.prototype.pushDialog = function(dpi) {
+    var allowed = (this.zIndexHigh_ - this.zIndexLow_) / 2 - 1;
+    if (this.pendingDialogStack.length >= allowed) {
+      return false;
+    }
+    if (this.pendingDialogStack.unshift(dpi) === 1) {
+      this.blockDocument();
+    }
+    this.updateStacking();
+    return true;
+  };
+
+  /**
+   * @param {!dialogPolyfillInfo} dpi
+   */
+  dialogPolyfill.DialogManager.prototype.removeDialog = function(dpi) {
+    var index = this.pendingDialogStack.indexOf(dpi);
+    if (index == -1) { return; }
+
+    this.pendingDialogStack.splice(index, 1);
+    if (this.pendingDialogStack.length === 0) {
+      this.unblockDocument();
+    }
+    this.updateStacking();
+  };
+
+  dialogPolyfill.dm = new dialogPolyfill.DialogManager();
+
+  /**
+   * Global form 'dialog' method handler. Closes a dialog correctly on submit
+   * and possibly sets its return value.
+   */
+  document.addEventListener('submit', function(ev) {
+    var target = ev.target;
+    if (!target || !target.hasAttribute('method')) { return; }
+    if (target.getAttribute('method').toLowerCase() !== 'dialog') { return; }
+    ev.preventDefault();
+
+    var dialog = findNearestDialog(/** @type {Element} */ (ev.target));
+    if (!dialog) { return; }
+
+    // FIXME: The original event doesn't contain the element used to submit the
+    // form (if any). Look in some possible places.
+    var returnValue;
+    var cands = [document.activeElement, ev.explicitOriginalTarget];
+    var els = ['BUTTON', 'INPUT'];
+    cands.some(function(cand) {
+      if (cand && cand.form == ev.target && els.indexOf(cand.nodeName.toUpperCase()) != -1) {
+        returnValue = cand.value;
+        return true;
+      }
+    });
+    dialog.close(returnValue);
+  }, true);
+
+  dialogPolyfill['forceRegisterDialog'] = dialogPolyfill.forceRegisterDialog;
+  dialogPolyfill['registerDialog'] = dialogPolyfill.registerDialog;
+
+  if (typeof define === 'function' && 'amd' in define) {
+    // AMD support
+    define(function() { return dialogPolyfill; });
+  } else if (typeof module === 'object' && typeof module['exports'] === 'object') {
+    // CommonJS support
+    module['exports'] = dialogPolyfill;
+  } else {
+    // all others
+    window['dialogPolyfill'] = dialogPolyfill;
+  }
+})();
+
+},{}],7:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -461,7 +1198,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var Vue // late bind
 var version
 var map = window.__VUE_HOT_MAP__ = Object.create(null)
@@ -599,7 +1336,7 @@ exports.reload = tryWrap(function (id, options) {
   })
 })
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (process,global){
 /*!
  * Vue.js v2.2.6
@@ -9923,6 +10660,6 @@ Vue$3.compile = compileToFunctions;
 module.exports = Vue$3;
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":5}]},{},[2]);
+},{"_process":7}]},{},[2]);
 
 //# sourceMappingURL=main.js.map

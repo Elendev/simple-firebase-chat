@@ -1,20 +1,54 @@
 <template>
-    <div class="loading" v-if="logued === null">Loading...</div>
-    <div class="login" v-else-if="!logued"><button v-on:click="login">Login</button></div>
-    <div class="app-panel" v-else="">
-        <button v-on:click="createChatroom">Create new chatroom</button>
-        <button v-on:click="joinChatroom">Join chatroom</button>
-        <div class="chatroom-list-container">
-            <chatroom-list v-bind:user="user" v-on:select="selectChatroom"></chatroom-list>
-        </div>
-        <div class="chatroom-container">
-            <chatroom v-bind:chatroom="currentChatroom" v-bind:user="user"></chatroom>
-        </div>
+    <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header" v-mdl>
+        <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title">{{currentChatroom}}</span>
+                <!--<div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+                    <label class="mdl-button mdl-js-button mdl-button--icon" for="search">
+                        <i class="material-icons">search</i>
+                    </label>
+                    <div class="mdl-textfield__expandable-holder">
+                        <input class="mdl-textfield__input" type="text" id="search">
+                        <label class="mdl-textfield__label" for="search">Enter your query...</label>
+                    </div>
+                </div>-->
+                <template v-if="logued">
+                    <div class="mdl-layout-spacer"></div>
+                    <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="hdrbtn" v-mdl>
+                        <i class="material-icons">more_vert</i>
+                    </button>
+                    <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect mdl-menu--bottom-right" for="hdrbtn" v-mdl>
+                        <li class="mdl-menu__item" v-on:click="createChatroom">Create new chatroom</li>
+                        <li class="mdl-menu__item" v-on:click="joinChatroom">Join chatroom</li>
+                    </ul>
+                </template>
+            </div>
+        </header>
+
+        <chatroom-list v-bind:user="user" v-on:select="selectChatroom" v-on:logout="logout"></chatroom-list>
+        <chatroom v-bind:chatroom="currentChatroom" v-bind:user="user"></chatroom>
+
+        <dialog class="mdl-dialog" id="init-dialog">
+            <div class="mdl-dialog__content">
+                <div class="loading" v-if="logued === null">Loading...</div>
+                <div class="login" v-else-if="!logued">
+                    <h3>Please connect to the chat</h3>
+                </div>
+            </div>
+            <div v-if="logued === false" class="mdl-dialog__actions mdl-dialog__actions--full-width">
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" v-on:click="login" v-mdl>Login</button>
+            </div>
+        </dialog>
+
 
     </div>
+
+
 </template>
 
 <script>
+    import dialogPolyfill from 'dialog-polyfill';
+
     export default {
         data: function() {
             return {
@@ -24,15 +58,33 @@
             }
         },
 
-        created: function() {
-            var vm = this;
-            firebase.auth().onAuthStateChanged(function(user) {
+        mounted: function() {
+
+            var initDialog = this.$el.querySelector('#init-dialog');
+
+            if (! initDialog.showModal) {
+                dialogPolyfill.registerDialog(initDialog);
+            }
+
+            initDialog.showModal();
+
+
+            firebase.auth().onAuthStateChanged(user => {
                 if (user) {
-                    vm.$data.user = user;
-                    vm.$data.logued = true;
+                    this.user = user;
+                    this.logued = true;
+
+                    initDialog.close();
+
+                    firebase.database().ref('/users/' + user.uid).set({
+                        'displayName': user.displayName,
+                        'photoURL': user.photoURL,
+                    });
+
                 } else {
-                    vm.$data.user = null;
-                    vm.$data.logued = false;
+                    this.user = null;
+                    this.logued = false;
+                    initDialog.showModal();
                 }
             });
         },
@@ -42,16 +94,17 @@
                 var provider = new firebase.auth.GoogleAuthProvider();
 
                 firebase.auth().signInWithPopup(provider).then(function(result) {
-                    var token = result.credential.accessToken;
-                    var user = result.user;
                 }).catch(function(error) {
                     var errorCode = error.code;
                     var errorMessage = error.message;
-                    var email = error.email;
-                    var credential = error.credential;
+                    console.log(error);
 
                     alert ('An error occured while login : ' + errorCode + ' - ' + errorMessage);
                 });
+            },
+            logout: function() {
+                firebase.auth().signOut();
+                this.user = null;
             },
             createChatroom: function(event) {
                 var chatroomName = prompt('Create new chatroom, please enter the name (format : [a-zA-Z0-9-_]+, min lenght: 2)');

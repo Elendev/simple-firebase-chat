@@ -17,6 +17,7 @@
     "babelify": "^7.3.0",
     "browserify": "^14.1.0",
     "cssnano": "^3.10.0",
+    "dialog-polyfill": "^0.4.7",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-concat": "^2.6.1",

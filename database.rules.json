@@ -2,8 +2,9 @@
   "rules": {
     "users": {
       "$uid": {
-        ".read": "auth !== null && $uid == auth.uid",
-        ".write": "auth !== null && $uid == auth.uid"
+        ".read": "auth !== null",
+        ".write": "auth !== null && $uid == auth.uid",
+        ".validate": "newData.exists() && newData.hasChildren(['photoURL', 'displayName'])"
       }
     },
 

@@ -12,27 +12,18 @@ Vue.component('app', App);
 Vue.component('chatroom', Chatroom);
 Vue.component('chatroom-list', ChatroomList);
 
+
+// Automatically bind MDL component
+// Quick hack to handle MDL components requiring
+// javascript to work
+Vue.directive('mdl', {
+    inserted: function(el) {
+        componentHandler.upgradeElement(el);
+    }
+});
+
+
 var app = new Vue({
     el: '#app'
 });
 
-
-
-/*import Person from './namespace/Person';
-
-class Main {
-
-    test() {
-        var person = new Person('toto');
-        console.log('Test method executed');
-        console.log(person.getName());
-    }
-
-}
-
-
-var main = new Main();
-
-main.test();
-
-alert('tata');*/

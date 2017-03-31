@@ -1,18 +1,45 @@
 <template>
-    <div v-if="chatroom" class="chatroom">
-        <h2>{{chatroom}}</h2>
-        <ul>
-            <h2>Chatroom</h2>
-            <li v-for="line in lines">{{line.user}} - {{line.message}}</li>
-        </ul>
-        <input type="text" v-model="message"> <button @click="sendMessage()">Submit</button>
-    </div>
-    <div v-else class="chatroom">
-        <h2>No chatroom selected</h2>
-    </div>
+
+    <main class="message-list mdl-layout__content mdl-color--grey-100">
+        <template v-if="user">
+            <template v-if="chatroom">
+
+                <div class="message-list__messages-container">
+                    <div v-for="line in lines" v-bind:class="{'message-list__message': true, 'mdl-shadow--2dp': true, 'mdl-color-text--grey-600': true, 'mdl-color--blue-200': line.own, 'own': line.own}">
+
+                            {{ line.message }}
+                        <div class="author" v-if="line.author !== null">
+                        <img :src="line.author.photoURL" class="author__image"> {{ line.author.displayName }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message-list__input">
+
+                    <div class="mdl-textfield mdl-js-textfield" v-mdl>
+                        <input class="mdl-textfield__input" type="text" id="message" v-model="message" @keyup="sendMessage">
+                        <label class="mdl-textfield__label" for="message">Type your message and send it using 'enter'...</label>
+                    </div>
+
+                    <!--<input type="text" v-model="message"> <button @click="sendMessage()">Submit</button>-->
+                </div>
+
+            </template>
+            <div v-else class="chatroom">
+                <h2>No chatroom selected</h2>
+            </div>
+        </template>
+    </main>
+
+
+
 </template>
 
 <script>
+    import UserInfoService from '../UserInfosService';
+
+    var uis = new UserInfoService();
+
     export default {
         props: ['user', 'chatroom'],
         data() {
@@ -34,15 +61,26 @@
                 this.lines = [];
                 if (this.chatroom !== null) {
                     firebase.database().ref('/chatrooms-messages/' + this.chatroom).on('child_added', snapshot => {
-                        this.lines.push({
+                        var line = {
                             'timestamp': snapshot.val().timestamp,
-                            'author' : snapshot.val().user,
+                            'author' : null,
                             'message': snapshot.val().message,
+                            'own': snapshot.val().user == this.user.uid,
+                        };
+
+                        uis.getUser(snapshot.val().user).then(value => {
+                            line.author = value;
                         });
+
+                        this.lines.push(line);
                     });
                 }
             },
-            sendMessage: function() {
+            sendMessage: function(e) {
+                if (e.keyCode !== 13) {
+                    return;
+                }
+
                 var data = {
                     'timestamp': firebase.database.ServerValue.TIMESTAMP,
                     'user': this.user.uid,
