@@ -10,9 +10,11 @@
 
     "chatroom-list": {
       "$uid": {
+        // only user with $uid can access his chatroom-list
         ".read": "auth !== null && $uid == auth.uid",
         ".write": "auth !== null && $uid == auth.uid",
 
+        // ensure the chatroom added to the chatroom-list exists
         "$chatroom_id": {
           ".validate": "root.child('/chatrooms/' + $chatroom_id).exists()"
         }

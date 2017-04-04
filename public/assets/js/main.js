@@ -219,7 +219,8 @@ exports.default = {
     data: function data() {
         return {
             lines: [],
-            message: null
+            message: null,
+            messagesRef: null
         };
     },
 
@@ -233,28 +234,35 @@ exports.default = {
     },
     methods: {
         displayChatroom: function displayChatroom() {
-            var _this = this;
-
             this.lines = [];
-            if (this.chatroom !== null) {
-                firebase.database().ref('/chatrooms-messages/' + this.chatroom).on('child_added', function (snapshot) {
-                    var line = {
-                        'timestamp': snapshot.val().timestamp,
-                        'author': null,
-                        'message': snapshot.val().message,
-                        'own': snapshot.val().user == _this.user.uid
-                    };
 
-                    uis.getUser(snapshot.val().user).then(function (value) {
-                        line.author = value;
-                    });
+            if (this.messagesRef) {
+                this.messagesRef.off('child_added', this.addLine);
+                this.messagesRef = null;
+            }
 
-                    _this.lines.push(line);
-                });
+            if (this.chatroom) {
+                this.messagesRef = firebase.database().ref('/chatrooms-messages/' + this.chatroom);
+                this.messagesRef.on('child_added', this.addLine);
+                console.log('messagesRef not null');
             }
         },
+        addLine: function addLine(snapshot) {
+            var line = {
+                'timestamp': snapshot.val().timestamp,
+                'author': null,
+                'message': snapshot.val().message,
+                'own': snapshot.val().user === this.user.uid
+            };
+
+            uis.getUser(snapshot.val().user).then(function (value) {
+                line.author = value;
+            });
+
+            this.lines.push(line);
+        },
         sendMessage: function sendMessage(e) {
-            var _this2 = this;
+            var _this = this;
 
             if (e.keyCode !== 13) {
                 return;
@@ -269,7 +277,7 @@ exports.default = {
             firebase.database().ref('/chatrooms-messages/' + this.chatroom).push(data).then(function (success) {
                 console.log('Message sent !');
                 console.log(success);
-                _this2.message = null;
+                _this.message = null;
             }, function (error) {
                 console.log('An error occured');
                 console.log(error);
@@ -306,7 +314,8 @@ exports.default = {
     props: ['user'],
     data: function data() {
         return {
-            chatrooms: []
+            chatrooms: [],
+            chatroomListRef: null
         };
     },
     created: function created() {
@@ -320,20 +329,25 @@ exports.default = {
     methods: {
         loadChatroomList: function loadChatroomList() {
             if (!this.user) {
-                return;
+                if (this.chatroomListRef) {
+                    this.chatroomListRef.off('value', this.onValueChange);
+                    this.chatroomListRef = null;
+                }
+            } else {
+                this.chatroomListRef = firebase.database().ref('/chatroom-list/' + this.user.uid);
+                this.chatroomListRef.on('value', this.onValueChange);
             }
-            var me = this;
-            firebase.database().ref('/chatroom-list/' + this.user.uid).on('value', function (snapshot) {
-                me.chatrooms = [];
+        },
 
-                snapshot.forEach(function (childSnapshot) {
-                    var chatroomId = childSnapshot.key;
-                    var chatroom = childSnapshot.val();
+        onValueChange: function onValueChange(snapshot) {
+            var _this = this;
 
-                    me.chatrooms.push({
-                        'owner': chatroom.owner,
-                        'id': chatroomId
-                    });
+            this.chatrooms = [];
+
+            snapshot.forEach(function (childSnapshot) {
+                _this.chatrooms.push({
+                    'owner': childSnapshot.val().owner,
+                    'id': childSnapshot.key
                 });
             });
         },

@@ -46,6 +46,7 @@
             return {
                 lines: [],
                 message: null,
+                messagesRef: null,
             }
         },
         created: function() {
@@ -59,22 +60,30 @@
         methods: {
             displayChatroom: function() {
                 this.lines = [];
-                if (this.chatroom !== null) {
-                    firebase.database().ref('/chatrooms-messages/' + this.chatroom).on('child_added', snapshot => {
-                        var line = {
-                            'timestamp': snapshot.val().timestamp,
-                            'author' : null,
-                            'message': snapshot.val().message,
-                            'own': snapshot.val().user == this.user.uid,
-                        };
 
-                        uis.getUser(snapshot.val().user).then(value => {
-                            line.author = value;
-                        });
-
-                        this.lines.push(line);
-                    });
+                if (this.messagesRef) {
+                    this.messagesRef.off('child_added', this.addLine);
+                    this.messagesRef = null;
                 }
+
+                if (this.chatroom) {
+                    this.messagesRef = firebase.database().ref('/chatrooms-messages/' + this.chatroom);
+                    this.messagesRef.on('child_added', this.addLine);
+                }
+            },
+            addLine: function(snapshot) {
+                const line = {
+                    'timestamp': snapshot.val().timestamp,
+                    'author' : null,
+                    'message': snapshot.val().message,
+                    'own': snapshot.val().user === this.user.uid,
+                };
+
+                uis.getUser(snapshot.val().user).then(value => {
+                    line.author = value;
+                });
+
+                this.lines.push(line);
             },
             sendMessage: function(e) {
                 if (e.keyCode !== 13) {

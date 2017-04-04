@@ -51,6 +51,7 @@
         data: function() {
             return {
                 chatrooms: [],
+                chatroomListRef: null,
             }
         },
         created: function() {
@@ -64,20 +65,23 @@
         methods: {
             loadChatroomList: function() {
                 if (!this.user) {
-                    return;
+                    if (this.chatroomListRef) {
+                        this.chatroomListRef.off('value', this.onValueChange);
+                        this.chatroomListRef = null;
+                    }
+                } else {
+                    this.chatroomListRef = firebase.database().ref('/chatroom-list/' + this.user.uid);
+                    this.chatroomListRef.on('value', this.onValueChange);
                 }
-                var me = this;
-                firebase.database().ref('/chatroom-list/' + this.user.uid).on('value', function(snapshot) {
-                    me.chatrooms = [];
+            },
 
-                    snapshot.forEach(function(childSnapshot) {
-                        var chatroomId = childSnapshot.key;
-                        var chatroom = childSnapshot.val();
+            onValueChange: function(snapshot) {
+                this.chatrooms = [];
 
-                        me.chatrooms.push({
-                            'owner': chatroom.owner,
-                            'id': chatroomId
-                        });
+                snapshot.forEach(childSnapshot => {
+                    this.chatrooms.push({
+                        'owner': childSnapshot.val().owner,
+                        'id': childSnapshot.key
                     });
                 });
             },
